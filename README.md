@@ -20,3 +20,6 @@ TODO: se creo un oggetto che contiene configurazione e punteggio di promettenza 
 Riconoscere configurazioni già visitate lo faccio tramite una tabella hash
 
 evaluate() restituisce stato finale (-1, 0, 1) moltiplicato per un calcolo sulla profondità della configurazione in modo che la vittoria più in alto abbia il valore maggiore e la sconfitta più in basso il valore minore
+
+Non c'è il problema di scegliere tra una mossa che porta al pareggio (eval = 0) e una con totale indecisione (nessuna pedina mia adiacente, eval = 0) perchè il pareggio si scopre solo arrivando in fondo all'albero di gioco, quindi ho abbastanza informazioni per non avere una mossa con totale indecisione.
+Il valore di promettenza è sempre compreso tra 0 e 1 poichè 8 pedine adiacenti non si possono avere (la cella sopra è vuota o fuori dalla scacchiera)

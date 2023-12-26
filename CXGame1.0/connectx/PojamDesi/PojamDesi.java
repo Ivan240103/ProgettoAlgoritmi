@@ -5,6 +5,7 @@ import java.util.concurrent.TimeoutException;
 
 import connectx.CXPlayer;
 import connectx.CXBoard;
+import connectx.CXCellState;
 import connectx.CXGameState;
 
 /**
@@ -15,12 +16,14 @@ import connectx.CXGameState;
  */
 public class PojamDesi implements CXPlayer {
 
-  private String name = "PojamDesi";
+  // massima profondità dell'albero e tempo in secondi per una mossa
   private int MAX_DEPTH, TIMEOUT;
+  // tempo all'inizio del turno in millisecondi
   private long start;
-
   // stati di vittoria e sconfitta riguardo il mio giocatore
   private CXGameState win, lose;
+  // stato della mia cella
+  private CXCellState myCoin;
   // mosse fattibili dopo il controllo delle mosse immediate
   private ArrayList<Integer> A;
   // massimo e minimo valore che può essere associato ad una mossa
@@ -40,6 +43,7 @@ public class PojamDesi implements CXPlayer {
     // imposta stati di vittoria e sconfitta in base a chi gioca per primo
     this.win = first ? CXGameState.WINP1 : CXGameState.WINP2;
     this.lose = first ? CXGameState.WINP2 : CXGameState.WINP1;
+    this.myCoin = first ? CXCellState.P1 : CXCellState.P2;
     A = new ArrayList<Integer>();
     this.MAX_EVAL = 1;
     this.MIN_EVAL = -1;
@@ -113,57 +117,17 @@ public class PojamDesi implements CXPlayer {
     return iterativeDeepening(B);
   }
   
-  // TODO: tenere salvata in una variabile la profondità raggiunta prima che scadesse il tempo, quando è nuovamente il proprio turno decrementarla di 1/2 in qunato la cima dell'albero viene "tagliata", e ricominciare dalla profondità inesplorata anzichè ripartire da zero
-  // TODO: controllare a che profondità arrivare al primo ciclo
-  // TODO: la profondità massima è MAX_DEPTH - il numero di pedine già giocate (ovvero il numero di caselle libere)
-  private int iterativeDeepening(CXBoard B) {
-    int sc = A.get(A.size() / 2);
-    int tmp = sc, tmpEval, eval;
-    try {
-      // parte da 3 perchè le mosse a depth 1 e 2 le ho già valutate in immediateMove()
-      for (int d = 3; d < MAX_DEPTH; d++) {
-        eval = MIN_EVAL;
-        // minore del valore minimo così la prima mossa legale la metto da parte intanto e non rischio di perdere a tavolino per mossa illegale
-        tmpEval = MIN_EVAL - 1;
-        for (int a : A) {
-          B.markColumn(a);
-          System.err.println("e");
-          eval = Integer.max(eval, alphabeta(B, false, MIN_EVAL, MAX_EVAL, 1, d));
-          System.err.println("f");
-          // se la mossa è la migliore in assoluto che possa trovare la ritorno senza valutare le altre
-          if (eval == MAX_EVAL) return a;
-          B.unmarkColumn();
-          System.err.println("g");
-          // TODO: in base alla promettenza delle mosse tengo quella con il valore più alto
-          // altrimenti scelgo una mossa di indecisione/patta
-          if (eval > tmpEval) {
-            tmp = a;
-            tmpEval = eval;
-          }
-          System.err.println("h");
-        }
-        // salvo la miglior mossa trovata
-        sc = tmp;
-        System.err.println("i");
-      }
-    } catch (TimeoutException e) {
-      System.err.println("TIMEOUT ITERATIVE");
-    }
-    System.err.println("j");
-    return sc;
-  }
-
   @Override
   public String playerName() {
-    return name;
+    return "PojamDesi";
   }
-
+  
   // controlla se il tempo sta per scadere
   private void checkTime() throws TimeoutException {
-		if ((System.currentTimeMillis() - start) / 1000.0 >= TIMEOUT * (99.0 / 100.0))
-			throw new TimeoutException();
+    if ((System.currentTimeMillis() - start) / 1000.0 >= TIMEOUT * (99.0 / 100.0))
+    throw new TimeoutException();
 	}
-
+  
   // cerca una mossa vincente e contemporanemente analizza le
   // contromosse dell'avversario
   // ritorna la mossa da giocare, -1 se non ne trova una specifica
@@ -205,15 +169,54 @@ public class PojamDesi implements CXPlayer {
     System.err.println("r");
     return -1;
   }
-
+  
+  // TODO: tenere salvata in una variabile la profondità raggiunta prima che scadesse il tempo, quando è nuovamente il proprio turno decrementarla di 1 o 2 in quanto la cima dell'albero viene "tagliata", e ricominciare dalla profondità inesplorata anzichè ripartire da zero
+  // TODO: la profondità massima è MAX_DEPTH - il numero di pedine già giocate (ovvero il numero di caselle libere)
+  private int iterativeDeepening(CXBoard B) {
+    int sc = A.get(A.size() / 2), tmp = sc;
+    float tmpEval, eval;
+    try {
+      // TODO: controllare a che profondità arrivare al primo ciclo
+      // parte da 3 perchè le mosse a depth 1 e 2 le ho già valutate in immediateMove()
+      for (int d = 3; d < MAX_DEPTH; d++) {
+        eval = MIN_EVAL;
+        // minore del valore minimo così la prima mossa legale la metto da parte intanto e non rischio di perdere a tavolino per mossa illegale
+        tmpEval = MIN_EVAL - 1;
+        for (int a : A) {
+          B.markColumn(a);
+          System.err.println("e");
+          eval = Float.max(eval, alphabeta(B, false, MIN_EVAL, MAX_EVAL, 1, d));
+          System.err.println("f");
+          // se la mossa è la migliore in assoluto che possa trovare la ritorno senza valutare le altre
+          if (eval == MAX_EVAL) return a;
+          B.unmarkColumn();
+          System.err.println("g");
+          // in base alla promettenza delle mosse tengo quella con il valore più alto
+          if (eval > tmpEval) {
+            tmp = a;
+            tmpEval = eval;
+          }
+          System.err.println("h");
+        }
+        // salvo la miglior mossa trovata
+        sc = tmp;
+        System.err.println("i");
+      }
+    } catch (TimeoutException e) {
+      System.err.println("TIMEOUT ITERATIVE");
+    }
+    System.err.println("j");
+    return sc;
+  }
+  
   // TODO: trovare un modo per riconoscere le configurazioni già valutate. (es: usare una tabella hash per tenere tracciate le configurazioni di gioco (chiave) con associato il valore calcolato da evaluate (valore). Se una configurazione di gioco è nella tabella hash vuol dire che ho valutato già tutti i suoi figli quindi posso passare direttamente alla profondità successiva ???)
   // maxDepth = 0 e depth = 1 se non si vuole usare il limite di profondità
-  private int alphabeta(CXBoard B, boolean myTurn, int alpha, int beta, int depth, int maxDepth) throws TimeoutException {
+  private float alphabeta(CXBoard B, boolean myTurn, int alpha, int beta, int depth, int maxDepth) throws TimeoutException {
     checkTime();
-    int eval;
+    float eval;
     if (depth == maxDepth || isLeaf(B.gameState())) {
       System.err.println("s");
-      eval = evaluate(B.gameState(), depth);
+      eval = evaluate(B, depth);
     } else if (myTurn) {
       System.err.println("t");
       // giocatore che massimizza: io (vittoria = 1)
@@ -221,9 +224,9 @@ public class PojamDesi implements CXPlayer {
       Integer[] ac = B.getAvailableColumns();
       for (int c : ac) {
         B.markColumn(c);
-        eval = Integer.max(eval, alphabeta(B, !myTurn, alpha, beta, depth + 1, maxDepth));
+        eval = Float.max(eval, alphabeta(B, !myTurn, alpha, beta, depth + 1, maxDepth));
         B.unmarkColumn();
-        alpha = Integer.max(eval, alpha);
+        alpha = Integer.max((int) eval, alpha);
         if (beta <= alpha) break; // beta cutoff
       }
     } else {
@@ -233,9 +236,9 @@ public class PojamDesi implements CXPlayer {
       Integer[] ac = B.getAvailableColumns();
       for (int c : ac) {
         B.markColumn(c);
-        eval = Integer.min(eval, alphabeta(B, !myTurn, alpha, beta, depth + 1, maxDepth));
+        eval = Float.min(eval, alphabeta(B, !myTurn, alpha, beta, depth + 1, maxDepth));
         B.unmarkColumn();
-        beta = Integer.min(eval, beta);
+        beta = Integer.min((int) eval, beta);
         if (beta <= alpha) break; // alpha cutoff
       }
     }
@@ -248,19 +251,51 @@ public class PojamDesi implements CXPlayer {
     return s == win || s == lose || s == CXGameState.DRAW;
   }
 
-  // TODO: usare la profondità per dare un punteggio migliore ad una mossa che velocizza la vittoria o rallenta la sconfitta (ad esempio moltiplicandola per il valore di eval in base a win/draw/lose?) La vittoria a profondità minore deve restituire il valore più alto, la sconfitta a profondità maggiore deve restituire il valore più basso
-  // TODO: provare ad asseganre dei float anzichè int con parte decimale rappresentante la promettenza della mossa come (numero di pedine adiacenti) / 8 -> divisione reale QUANDO LA CONFIGURAZIONE È DI INDECISIONE (non patta, patta è solo 0). Giocatore avversario che minimizza deve scegliere la mossa che mi danneggerebbe maggiormente === quella con il maggior numero di mie pedine adiacenti (?).
+  // TODO: usare la profondità per dare un punteggio migliore ad una mossa che velocizza la vittoria o rallenta la sconfitta. La vittoria a profondità minore deve restituire il valore più alto tra le vittorie, la sconfitta a profondità maggiore deve restituire il valore più alto tra le sconfitte. Questo si potrebbe fare moltiplicando 1 o -1 con MAX_DEPTH - depth
   // assegna un valore allo stato passato
-  private int evaluate(CXGameState state, int depth) {
+  private float evaluate(CXBoard B, int depth) {
     System.err.println("x");
     System.err.println("Profondità: " + depth);
-    if (state == win) {
-      return MAX_EVAL;
-    } else if (state == lose) {
-      return MIN_EVAL;
-    } else {
+    if (B.gameState() == win) {
+      return 1;
+    } else if (B.gameState() == lose) {
+      return -1;
+    } else if (B.gameState() == CXGameState.DRAW) {
       return 0;
+    } else {
+      // in caso di indecisione assegna un punteggio di promettenza della mossa tra 0 e 1 in base alla quantità di mie coin adiacenti
+      return coinsAround(B) / 8.0f;
     }
+  }
+
+  // ritorna il numero delle celle adiacenti all'ultima occupata che contengono una mia pedina
+  private int coinsAround(CXBoard B) {
+    int i = B.getLastMove().i, j = B.getLastMove().j, ca = 0;
+    // colonna a dx
+    try {
+      if (B.cellState(i - 1, j + 1) == myCoin) ca++;
+    } catch (IndexOutOfBoundsException e) {}
+    try {
+      if (B.cellState(i, j + 1) == myCoin) ca++;
+    } catch (IndexOutOfBoundsException e) {}
+    try {
+      if (B.cellState(i + 1, j + 1) == myCoin) ca++;
+    } catch (IndexOutOfBoundsException e) {}
+    // colonna a sx
+    try {
+      if (B.cellState(i - 1, j - 1) == myCoin) ca++;
+    } catch (IndexOutOfBoundsException e) {}
+    try {
+      if (B.cellState(i, j - 1) == myCoin) ca++;
+    } catch (IndexOutOfBoundsException e) {}
+    try {
+      if (B.cellState(i + 1, j - 1) == myCoin) ca++;
+    } catch (IndexOutOfBoundsException e) {}
+    // cella sotto
+    try {
+      if (B.cellState(i + 1, j) == myCoin) ca++;
+    } catch (IndexOutOfBoundsException e) {}
+    return ca;
   }
   
 }
