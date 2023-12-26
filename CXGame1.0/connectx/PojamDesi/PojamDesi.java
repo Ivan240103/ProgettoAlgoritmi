@@ -47,6 +47,7 @@ public class PojamDesi implements CXPlayer {
   }
 
   // TODO: se il numero di mosse giocate è superiore ad una soglia tarata in base a MAX_DEPTH usare visita in profondità (c'è una funzione in CXBoard che restituisce il numero di celle già occupate o libere)
+  // TODO: se sono il primo a giocare alcune mosse possono indirizzare la partita -> guardare su internet
   @Override
   public int selectColumn(CXBoard B) {
     // salvo l'inizio del mio countdown
@@ -74,6 +75,7 @@ public class PojamDesi implements CXPlayer {
 
       // TODO: riordinare le mosse di A in base a promettenza decrescente
 
+      /* // ALPHABETA INIZIALE CON LIMITE EURISTICO
       // se ho delle mosse giocabili scelgo quella che mi può portare
       // eventualmente al risultato migliore
       int eval = MIN_EVAL;
@@ -101,12 +103,54 @@ public class PojamDesi implements CXPlayer {
         System.err.println("j");
         // indifferente perchè ogni mossa porta alla sconfitta (non immediata)
         return A.get(A.size() / 2);
+      } */
+    } catch (TimeoutException e) {
+      // ritorno una mossa a caso perchè non ho trovato nulla
+      System.err.println("TIMEOUT PORCODIO");
+      return A.get(A.size() / 2);
+    }
+
+    return iterativeDeepening(B);
+  }
+  
+  // TODO: tenere salvata in una variabile la profondità raggiunta prima che scadesse il tempo, quando è nuovamente il proprio turno decrementarla di 1/2 in qunato la cima dell'albero viene "tagliata", e ricominciare dalla profondità inesplorata anzichè ripartire da zero
+  // TODO: controllare a che profondità arrivare al primo ciclo
+  // TODO: la profondità massima è MAX_DEPTH - il numero di pedine già giocate (ovvero il numero di caselle libere)
+  private int iterativeDeepening(CXBoard B) {
+    int sc = A.get(A.size() / 2);
+    int tmp = sc, tmpEval, eval;
+    try {
+      // parte da 3 perchè le mosse a depth 1 e 2 le ho già valutate in immediateMove()
+      for (int d = 3; d < MAX_DEPTH; d++) {
+        eval = MIN_EVAL;
+        // minore del valore minimo così la prima mossa legale la metto da parte intanto e non rischio di perdere a tavolino per mossa illegale
+        tmpEval = MIN_EVAL - 1;
+        for (int a : A) {
+          B.markColumn(a);
+          System.err.println("e");
+          eval = Integer.max(eval, alphabeta(B, false, MIN_EVAL, MAX_EVAL, 1, d));
+          System.err.println("f");
+          // se la mossa è la migliore in assoluto che possa trovare la ritorno senza valutare le altre
+          if (eval == MAX_EVAL) return a;
+          B.unmarkColumn();
+          System.err.println("g");
+          // TODO: in base alla promettenza delle mosse tengo quella con il valore più alto
+          // altrimenti scelgo una mossa di indecisione/patta
+          if (eval > tmpEval) {
+            tmp = a;
+            tmpEval = eval;
+          }
+          System.err.println("h");
+        }
+        // salvo la miglior mossa trovata
+        sc = tmp;
+        System.err.println("i");
       }
     } catch (TimeoutException e) {
-      // ritorno la miglior mossa trovata fin'ora
-      System.err.println("TIMEOUT PORCODIO");
-      return sc;
+      System.err.println("TIMEOUT ITERATIVE");
     }
+    System.err.println("j");
+    return sc;
   }
 
   @Override
@@ -162,17 +206,8 @@ public class PojamDesi implements CXPlayer {
     return -1;
   }
 
-  // TODO: tenere salvata in una variabile la profondità raggiunta prima che scadesse il tempo, quando è nuovamente il proprio turno decrementarla di 1/2 in qunato la cima dell'albero viene "tagliata", e ricominciare dalla profondità inesplorata anzichè ripartire da zero
-  private int iterativeDeepening(CXBoard B, boolean myTurn) {
-    int alpha = MIN_EVAL; 
-    int beta = MAX_EVAL;
-    int eval = 0;
-    for (int d = 1; d < MAX_DEPTH; d++) {
-      
-    }
-  }
-
   // TODO: trovare un modo per riconoscere le configurazioni già valutate. (es: usare una tabella hash per tenere tracciate le configurazioni di gioco (chiave) con associato il valore calcolato da evaluate (valore). Se una configurazione di gioco è nella tabella hash vuol dire che ho valutato già tutti i suoi figli quindi posso passare direttamente alla profondità successiva ???)
+  // maxDepth = 0 e depth = 1 se non si vuole usare il limite di profondità
   private int alphabeta(CXBoard B, boolean myTurn, int alpha, int beta, int depth, int maxDepth) throws TimeoutException {
     checkTime();
     int eval;
