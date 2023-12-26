@@ -34,7 +34,6 @@ import java.awt.geom.Area;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.GeneralPath;
 import java.awt.image.BufferedImage;
-import java.io.Serializable;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.concurrent.Callable;
@@ -54,7 +53,7 @@ import connectx.CXGame.CXPlayerType;
 /**
  * Inner class for custom graphics drawing.
  */
-public class CXBoardPanel extends JPanel implements MouseListener, MouseMotionListener, Serializable {
+public class CXBoardPanel extends JPanel implements MouseListener, MouseMotionListener {
 	protected final int NUMBER_OF_ROWS;
 	protected final int NUMBER_OF_COLS;
 

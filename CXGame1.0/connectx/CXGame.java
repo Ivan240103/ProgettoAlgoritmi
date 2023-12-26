@@ -24,7 +24,6 @@ import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Toolkit;
-import java.io.Serializable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -41,7 +40,7 @@ import javax.swing.border.CompoundBorder;
  * Initializes, updates and starts the (M,N)-game.
  * <p>Usage: CXGame M N [CXPlayer class name]</p>
  */
-public class CXGame extends JFrame implements Serializable {
+public class CXGame extends JFrame {
 	/** Game Board */
 	protected final CXBoard B;
 	protected JLabel statusBar; // Status Bar

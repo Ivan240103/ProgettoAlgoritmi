@@ -29,7 +29,6 @@ import java.awt.GridLayout;
 //import java.awt.Stroke;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.Serializable;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -40,7 +39,7 @@ import javax.swing.border.Border;
 
 import connectx.CXGame.CXPlayerType;
 
-public class CXInputPanel extends JPanel implements ActionListener, Serializable {
+public class CXInputPanel extends JPanel implements ActionListener {
 
 	CXBoardPanel bPanel;
 	JLabel player1;
