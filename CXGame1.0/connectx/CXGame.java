@@ -60,8 +60,8 @@ public class CXGame extends JFrame implements Serializable {
 
 	protected CXPlayerType[] Player = new CXPlayerType[2];
 	protected CXGameType gameType;
-	// TODO: modificato il timout!!!
-	protected final int TIMEOUT = 300; // 10 seconds timeout
+	
+	protected final int TIMEOUT = 10; // 10 seconds timeout
 
 	CXGameState gameState; 
 
