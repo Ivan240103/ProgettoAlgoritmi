@@ -192,6 +192,7 @@ public class PojamDesi implements CXPlayer {
   }
   
   // TODO: trovare un modo per riconoscere le configurazioni già valutate. (es: usare una tabella hash per tenere tracciate le configurazioni di gioco (chiave) con associato il valore calcolato da evaluate (valore). Se una configurazione di gioco è nella tabella hash vuol dire che ho valutato già tutti i suoi figli quindi posso passare direttamente alla profondità successiva ???)
+  // TODO: controllare se togliere alpha e beta
   // maxDepth = 0 e depth = 1 se non si vuole usare il limite di profondità
   private float alphabeta(CXBoard B, boolean myTurn, float alpha, float beta, int depth, int maxDepth) throws TimeoutException {
     checkTime();
