@@ -4,7 +4,7 @@ Progetto di Algoritmi e Strutture Dati 2023-24
 ## DEBUG
 Comando per avviare il gioco con grafica da portatile Ivan:
 ```bash
-/usr/bin/env /usr/lib/jvm/java-17-openjdk-amd64/bin/java -XX:+ShowCodeDetailsInExceptionMessages -cp /home/ivan/.config/Code/User/workspaceStorage/8e146f0cc4710eb650eb9badd0eb4402/redhat.java/jdt_ws/Unibo_c8ba3648/bin connectx.CXGame 5 6 4 connectx.PojamDesi.PojamDesi connectx.L1.L1
+/usr/bin/env /usr/lib/jvm/java-17-openjdk-amd64/bin/java -XX:+ShowCodeDetailsInExceptionMessages -cp /home/ivan/.config/Code/User/workspaceStorage/8e146f0cc4710eb650eb9badd0eb4402/redhat.java/jdt_ws/Unibo_c8ba3648/bin connectx.CXGame 6 7 4 connectx.PojamDesi.PojamDesi connectx.L1.L1
 ```
 
 ## APPUNTI

@@ -26,7 +26,7 @@ public class PojamDesi implements CXPlayer {
   // mosse fattibili dopo il controllo delle mosse immediate
   private ArrayList<Move> A;
   // massimo e minimo valore che può essere associato ad una mossa
-  private int MAX_EVAL, MIN_EVAL;
+  private float MAX_EVAL, MIN_EVAL;
   // ultima profondità raggiunta con iterative deepening
   private int lastDepth;
 
@@ -46,8 +46,6 @@ public class PojamDesi implements CXPlayer {
     this.lose = first ? CXGameState.WINP2 : CXGameState.WINP1;
     this.myCoin = first ? CXCellState.P1 : CXCellState.P2;
     A = new ArrayList<Move>();
-    this.MAX_EVAL = 1;
-    this.MIN_EVAL = -1;
     this.lastDepth = 0;
   }
 
@@ -67,7 +65,13 @@ public class PojamDesi implements CXPlayer {
       nodesEvaluated[i] = 0;
     }
 
+    // variabili che cambiano ogni turno
+    // massima profondità dell'albero
     this.MAX_DEPTH = B.numOfFreeCells();
+    // massimo valore assegnabile da evaluate()
+    this.MAX_EVAL = MAX_DEPTH;
+    // minimo valore assegnabile da evaluate()
+    this.MIN_EVAL = -MAX_DEPTH;
 
     try {
       sc = immediateMove(B);
@@ -91,9 +95,6 @@ public class PojamDesi implements CXPlayer {
       return A.get(A.size() / 2).getColumn();
     }
 
-    // ordino le mosse per promettenza decrescente
-    A.sort(null);
-    
     return iterativeDeepening(B);
   }
   
@@ -145,6 +146,9 @@ public class PojamDesi implements CXPlayer {
     int sc = A.get(A.size() / 2).getColumn(), tmp = sc;
     float tmpEval, eval;
 
+    // ordino le mosse per promettenza decrescente
+    A.sort(null);
+    
     // DEBUG:
     float scEval = 0.0f;
 
@@ -157,8 +161,6 @@ public class PojamDesi implements CXPlayer {
         for (Move m : A) {
           B.markColumn(m.getColumn());
           eval = Float.max(eval, alphabeta(B, false, MIN_EVAL, MAX_EVAL, 1, d));
-          // se la mossa è la migliore in assoluto che possa trovare la ritorno senza valutare le altre
-          if (eval == MAX_EVAL) return m.getColumn();
           B.unmarkColumn();
           // in base alla promettenza delle mosse tengo quella con il valore più alto
           if (eval > tmpEval) {
@@ -191,7 +193,7 @@ public class PojamDesi implements CXPlayer {
   
   // TODO: trovare un modo per riconoscere le configurazioni già valutate. (es: usare una tabella hash per tenere tracciate le configurazioni di gioco (chiave) con associato il valore calcolato da evaluate (valore). Se una configurazione di gioco è nella tabella hash vuol dire che ho valutato già tutti i suoi figli quindi posso passare direttamente alla profondità successiva ???)
   // maxDepth = 0 e depth = 1 se non si vuole usare il limite di profondità
-  private float alphabeta(CXBoard B, boolean myTurn, int alpha, int beta, int depth, int maxDepth) throws TimeoutException {
+  private float alphabeta(CXBoard B, boolean myTurn, float alpha, float beta, int depth, int maxDepth) throws TimeoutException {
     checkTime();
     float eval;
     if (depth == maxDepth || isLeaf(B.gameState())) {
@@ -204,7 +206,7 @@ public class PojamDesi implements CXPlayer {
         B.markColumn(c);
         eval = Float.max(eval, alphabeta(B, !myTurn, alpha, beta, depth + 1, maxDepth));
         B.unmarkColumn();
-        alpha = Integer.max((int) eval, alpha);
+        alpha = Float.max(eval, alpha);
         if (beta <= alpha) break; // beta cutoff
       }
     } else {
@@ -215,7 +217,7 @@ public class PojamDesi implements CXPlayer {
         B.markColumn(c);
         eval = Float.min(eval, alphabeta(B, !myTurn, alpha, beta, depth + 1, maxDepth));
         B.unmarkColumn();
-        beta = Integer.min((int) eval, beta);
+        beta = Float.min(eval, beta);
         if (beta <= alpha) break; // alpha cutoff
       }
     }
@@ -227,17 +229,16 @@ public class PojamDesi implements CXPlayer {
     return s == win || s == lose || s == CXGameState.DRAW;
   }
 
-  // TODO: usare la profondità per dare un punteggio migliore ad una mossa che velocizza la vittoria o rallenta la sconfitta. La vittoria a profondità minore deve restituire il valore più alto tra le vittorie, la sconfitta a profondità maggiore deve restituire il valore più alto tra le sconfitte. Questo si potrebbe fare moltiplicando 1 o -1 con MAX_DEPTH - depth
-  // assegna un valore allo stato passato
+  // assegna un valore alla configurazione di gioco
   private float evaluate(CXBoard B, int depth) {
 
     // DEBUG:
     nodesEvaluated[depth]++;
     
     if (B.gameState() == win) {
-      return 1;
+      return 1 + (MAX_DEPTH - depth);
     } else if (B.gameState() == lose) {
-      return -1;
+      return -1 - (MAX_DEPTH - depth);
     } else if (B.gameState() == CXGameState.DRAW) {
       return 0;
     } else {
