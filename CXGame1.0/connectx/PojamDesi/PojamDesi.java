@@ -1,6 +1,7 @@
 package connectx.PojamDesi;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.concurrent.TimeoutException;
 import connectx.CXPlayer;
 import connectx.CXBoard;
@@ -29,6 +30,9 @@ public class PojamDesi implements CXPlayer {
   private float MAX_EVAL, MIN_EVAL;
   // ultima profondità raggiunta con iterative deepening
   private int lastDepth;
+  // TODO: controllare efficienza HashTable -> senza quella raggiungeva una profondità in più (forse meglio rimuoverla -> Giarrusso)
+  // hash table per salvare le configurazioni con annessa valutazione
+  private HashMap<CXCellState[][], Float> H;
 
   // DEBUG: monitora le prestazioni euristicamente
   private int[] nodesEvaluated = new int[30];
@@ -47,9 +51,10 @@ public class PojamDesi implements CXPlayer {
     this.myCoin = first ? CXCellState.P1 : CXCellState.P2;
     A = new ArrayList<Move>();
     this.lastDepth = 0;
+    H = new HashMap<CXCellState[][], Float>(4096);
   }
 
-  // TODO: se sono il primo a giocare alcune mosse possono indirizzare la partita -> guardare su internet
+  // TODO: se sono il primo a giocare alcune mosse possono indirizzare la partita -> guardare su internet (secondo Giarrusso generalmente la mossa migliore è la colonna centrale, in caso di numero di colonne pari preferire quella a sinistra)
   @Override
   public int selectColumn(CXBoard B) {
     // salvo l'inizio del mio countdown
@@ -155,6 +160,8 @@ public class PojamDesi implements CXPlayer {
     try {
       // cerco di ri-valutare il minor numero di nodi possibili
       for (int d = Integer.max(lastDepth - 2, 3); d < MAX_DEPTH; d++) {
+        // elimina le vecchie configurazioni (scendendo i livelli dell'albero le valutazioni cambiano)
+        H.clear();
         eval = MIN_EVAL;
         // minore del valore minimo così la prima mossa legale la metto da parte intanto e non rischio di perdere a tavolino per mossa illegale
         tmpEval = MIN_EVAL - 1;
@@ -184,52 +191,61 @@ public class PojamDesi implements CXPlayer {
     // DEBUG:
     System.err.println("Eval mossa: " + scEval);
     System.err.println("Tempo usato: " + (System.currentTimeMillis() - start) + "ms");
+    System.err.println("Configurazioni univoche valutate: " + H.keySet().size());
     for (int i = 0; i < nodesEvaluated.length; i++) {
       if (nodesEvaluated[i] > 0) System.err.println("Profondità " + i + ", nodi valutati = " + nodesEvaluated[i]);
     }
 
     return sc;
   }
-  
-  // TODO: trovare un modo per riconoscere le configurazioni già valutate. (es: usare una tabella hash per tenere tracciate le configurazioni di gioco (chiave) con associato il valore calcolato da evaluate (valore). Se una configurazione di gioco è nella tabella hash vuol dire che ho valutato già tutti i suoi figli quindi posso passare direttamente alla profondità successiva ???)
-  // TODO: controllare se togliere alpha e beta
+
   // maxDepth = 0 e depth = 1 se non si vuole usare il limite di profondità
   private float alphabeta(CXBoard B, boolean myTurn, float alpha, float beta, int depth, int maxDepth) throws TimeoutException {
     checkTime();
-    float eval;
-    if (depth == maxDepth || isLeaf(B.gameState())) {
-      eval = evaluate(B, depth);
-    } else if (myTurn) {
-      // giocatore che massimizza: io (vittoria = 1)
-      eval = MIN_EVAL;
-      Integer[] ac = B.getAvailableColumns();
-      for (int c : ac) {
-        B.markColumn(c);
-        eval = Float.max(eval, alphabeta(B, !myTurn, alpha, beta, depth + 1, maxDepth));
-        B.unmarkColumn();
-        alpha = Float.max(eval, alpha);
-        if (beta <= alpha) break; // beta cutoff
-      }
+    
+    // controllo se ho già valutato la configurazione attuale
+    if (H.containsKey(B.getBoard())) {
+      // nel caso ritorno il valore
+      return H.get(B.getBoard());
     } else {
-      // giocatore che minimizza: avversario (vittoria = -1)
-      eval = MAX_EVAL;
-      Integer[] ac = B.getAvailableColumns();
-      for (int c : ac) {
-        B.markColumn(c);
-        eval = Float.min(eval, alphabeta(B, !myTurn, alpha, beta, depth + 1, maxDepth));
-        B.unmarkColumn();
-        beta = Float.min(eval, beta);
-        if (beta <= alpha) break; // alpha cutoff
+      // altrimenti calcolo il valore da assegnare
+      float eval;
+      if (depth == maxDepth || isLeaf(B.gameState())) {
+        eval = evaluate(B, depth);
+      } else if (myTurn) {
+        // giocatore che massimizza: io (vittoria = 1)
+        eval = MIN_EVAL;
+        Integer[] ac = B.getAvailableColumns();
+        for (int c : ac) {
+          B.markColumn(c);
+          eval = Float.max(eval, alphabeta(B, !myTurn, alpha, beta, depth + 1, maxDepth));
+          B.unmarkColumn();
+          alpha = Float.max(eval, alpha);
+          if (beta <= alpha) break; // beta cutoff
+        }
+      } else {
+        // giocatore che minimizza: avversario (vittoria = -1)
+        eval = MAX_EVAL;
+        Integer[] ac = B.getAvailableColumns();
+        for (int c : ac) {
+          B.markColumn(c);
+          eval = Float.min(eval, alphabeta(B, !myTurn, alpha, beta, depth + 1, maxDepth));
+          B.unmarkColumn();
+          beta = Float.min(eval, beta);
+          if (beta <= alpha) break; // alpha cutoff
+        }
       }
+      H.put(B.getBoard(), eval);
+  
+      return eval; 
     }
-    return eval;
   }
 
   // controlla se è uno stato di fine partita
   private boolean isLeaf(CXGameState s) {
     return s == win || s == lose || s == CXGameState.DRAW;
   }
-
+  
   // assegna un valore alla configurazione di gioco
   private float evaluate(CXBoard B, int depth) {
 
