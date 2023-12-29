@@ -23,7 +23,7 @@ public class PojamDesi implements CXPlayer {
   // stato della cella occupata dal giocatore
   private CXCellState MY_COIN;
   // true se gioca la prima mossa della partita, false altrimenti
-  private boolean firstOfMatch;
+  private boolean firstMove;
   // tempo all'inizio del turno in millisecondi
   private long start;
   // massima profondità dell'albero
@@ -50,7 +50,7 @@ public class PojamDesi implements CXPlayer {
     this.WIN = first ? CXGameState.WINP1 : CXGameState.WINP2;
     this.LOSE = first ? CXGameState.WINP2 : CXGameState.WINP1;
     this.MY_COIN = first ? CXCellState.P1 : CXCellState.P2;
-    this.firstOfMatch = first;
+    this.firstMove = true;
     this.lastDepth = 0;
     this.A = new ArrayList<Move>();
   }
@@ -68,9 +68,9 @@ public class PojamDesi implements CXPlayer {
       nodesEvaluated[i] = 0;
     }
     
-    // se è la prima mossa della partita gioca al centro (o centro-sx)
-    if (firstOfMatch) {
-      firstOfMatch = false;
+    // se è la prima mossa gioca al centro (o centro-sx)
+    if (firstMove) {
+      firstMove = false;
       return B.N / 2;
     }
     
@@ -97,7 +97,7 @@ public class PojamDesi implements CXPlayer {
     }
 
     // altrimenti esplora l'albero di gioco
-    return iterativeDeepening(B);
+    return iterativeDeepening(B, A);
   }
   
   @Override
@@ -156,43 +156,50 @@ public class PojamDesi implements CXPlayer {
     return -1;
   }
   
-  private int iterativeDeepening(CXBoard B) {
-    int sc = A.get(A.size() / 2).getColumn(), tmp = sc;
+  /**
+   * Trova la giocata più vantaggiosa da effettuare esplorando l'albero di gioco in ampiezza
+   * 
+   * @param B configurazione di gioco attuale
+   * @param M array delle mosse giocabili
+   * @return mossa da giocare
+   */
+  private int iterativeDeepening(CXBoard B, ArrayList<Move> M) {
+    // mossa da giocare (inizialmente casuale)
+    int sc = M.get(M.size() / 2).getColumn();
+    // mossa più vantaggiosa alla profondità corrente
+    int tmp = sc;
+    // valutazione della mossa tmp e della mossa attualmente analizzata 
     float tmpEval, eval;
-
-    // ordino le mosse per promettenza decrescente
-    A.sort(null);
+    // ordina le mosse per promettenza decrescente
+    M.sort(null);
     
     // DEBUG:
     float scEval = 0.0f;
 
     try {
-      // cerco di ri-valutare il minor numero di nodi possibili
-      for (int d = Integer.max(lastDepth - 2, 3); d < maxDepth; d++) {
+      for (int d = Integer.max(lastDepth - 2, 3); d <= maxDepth; d++) {
+        tmpEval = minEval;
         eval = minEval;
-        // minore del valore minimo così la prima mossa legale la metto da parte intanto e non rischio di perdere a tavolino per mossa illegale
-        tmpEval = minEval - 1;
-        for (Move m : A) {
+        for (Move m : M) {
           B.markColumn(m.getColumn());
-          eval = Float.max(eval, alphabeta(B, false, minEval, maxEval, 1, d));
+          eval = alphabeta(B, false, minEval, maxEval, 1, d);
           B.unmarkColumn();
-          // in base alla promettenza delle mosse tengo quella con il valore più alto
+          // tiene la mossa con la valutazione maggiore
           if (eval > tmpEval) {
             tmp = m.getColumn();
             tmpEval = eval;
           }
         }
-        // salvo la miglior mossa trovata
+        // salva la migliore mossa trovata
         sc = tmp;
+        // salva la profondità esplorata completamente
+        lastDepth = d;
 
         //DEBUG:
         scEval = tmpEval;
-
-        // salvo la profondità raggiunta
-        lastDepth = d;
       }
     } catch (TimeoutException e) {
-      System.err.println("TIMEOUT ITERATIVE");
+      System.err.println("TIMEOUT ITERATIVE"); //DEBUG:
     }
 
     // DEBUG:
@@ -205,14 +212,29 @@ public class PojamDesi implements CXPlayer {
     return sc;
   }
 
-  // maxDepth = 0 e depth = 1 se non si vuole usare il limite di profondità
+  /**
+   * Assegna un valore ad una configurazione di gioco analizzando le possibili mosse successive.
+   * <p>Valore >= 1 se la configurazione è vincente, <= -1 se la configurazione è perdente,
+   * 0 se è una patta, 0.xyz in caso di indecisione (.xyz punteggio di promettenza).
+   * <p>depth = 1 e maxDepth = 0 se non si vuole usare il limite di profondità
+   * 
+   * @param B configurazione di gioco
+   * @param myTurn true se è il turno del giocatore, false se è dell'avversario
+   * @param alpha punteggio minimo ottenibile dal giocatore
+   * @param beta punteggio massimo ottenibile dall'avversario
+   * @param depth profondità di B nell'albero di gioco
+   * @param maxDepth massima profondità raggiungibile durante la visita
+   * @return valore assegnato
+   * @throws TimeoutException il tempo sta per scadere
+   */
   private float alphabeta(CXBoard B, boolean myTurn, float alpha, float beta, int depth, int maxDepth) throws TimeoutException {
-    checkTime();
+    // valutazione della mossa
     float eval;
+    checkTime();
     if (depth == maxDepth || isLeaf(B.gameState())) {
       eval = evaluate(B, depth);
     } else if (myTurn) {
-      // giocatore che massimizza: io (vittoria = 1)
+      // giocatore che massimizza (PojamDesi)
       eval = minEval;
       Integer[] ac = B.getAvailableColumns();
       for (int c : ac) {
@@ -223,7 +245,7 @@ public class PojamDesi implements CXPlayer {
         if (beta <= alpha) break; // beta cutoff
       }
     } else {
-      // giocatore che minimizza: avversario (vittoria = -1)
+      // giocatore che minimizza (avversario)
       eval = maxEval;
       Integer[] ac = B.getAvailableColumns();
       for (int c : ac) {
