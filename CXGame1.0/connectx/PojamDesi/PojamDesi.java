@@ -35,9 +35,6 @@ public class PojamDesi implements CXPlayer {
   // mosse giocabili
   private ArrayList<Move> A;
 
-  // DEBUG: monitora le prestazioni (un po' campato in aria)
-  private int[] nodesEvaluated = new int[30];
-
   /**
    * Costruttore vuoto default
    */
@@ -62,12 +59,6 @@ public class PojamDesi implements CXPlayer {
     this.maxEval = maxDepth;
     this.minEval = -maxDepth;
     
-    // DEBUG:
-    System.err.println("VIA");
-    for (int i = 0; i < nodesEvaluated.length; i++) {
-      nodesEvaluated[i] = 0;
-    }
-    
     // se è la prima mossa gioca al centro (o centro-sx)
     if (firstMove) {
       firstMove = false;
@@ -77,25 +68,16 @@ public class PojamDesi implements CXPlayer {
     try {
       // selected column
       int sc = immediateMove(B, A);
-
       // se ha una mossa vincente la gioca
       if (sc != -1) return sc;
-
       // se non ci sono mosse giocabili sconfitta inevitabile
-      if (A.isEmpty()) {
-        System.err.println("Sconfitta assicurata"); // DEBUG:
-        return B.getAvailableColumns()[0];
-      }
-
+      if (A.isEmpty()) return B.getAvailableColumns()[0];
       // se ha una sola mossa disponibile gioca quella
       if (A.size() == 1) return A.get(0).getColumn();
-
     } catch (TimeoutException e) {
       // se il tempo scade gioca una mossa a caso
-      System.err.println("TIMEOUT"); // DEBUG:
       return B.getAvailableColumns()[0];
     }
-
     // altrimenti esplora l'albero di gioco
     return iterativeDeepening(B, A);
   }
@@ -172,10 +154,6 @@ public class PojamDesi implements CXPlayer {
     float tmpEval, eval;
     // ordina le mosse per promettenza decrescente
     M.sort(null);
-    
-    // DEBUG:
-    float scEval = 0.0f;
-
     try {
       for (int d = Integer.max(lastDepth - 2, 3); d <= maxDepth; d++) {
         tmpEval = minEval;
@@ -194,21 +172,8 @@ public class PojamDesi implements CXPlayer {
         sc = tmp;
         // salva la profondità esplorata completamente
         lastDepth = d;
-
-        //DEBUG:
-        scEval = tmpEval;
       }
-    } catch (TimeoutException e) {
-      System.err.println("TIMEOUT ITERATIVE"); //DEBUG:
-    }
-
-    // DEBUG:
-    System.err.println("Eval mossa: " + scEval);
-    System.err.println("Tempo usato: " + (System.currentTimeMillis() - start) + "ms");
-    for (int i = 0; i < nodesEvaluated.length; i++) {
-      if (nodesEvaluated[i] > 0) System.err.println("Profondità " + i + ", nodi valutati = " + nodesEvaluated[i]);
-    }
-
+    } catch (TimeoutException e) {}
     return sc;
   }
 
@@ -279,10 +244,6 @@ public class PojamDesi implements CXPlayer {
    * @return valore assegnato
    */
   private float evaluate(CXBoard B, int depth) {
-
-    // DEBUG:
-    nodesEvaluated[depth]++;
-    
     if (B.gameState() == WIN) {
       return 1 + (maxDepth - depth);
     } else if (B.gameState() == LOSE) {
