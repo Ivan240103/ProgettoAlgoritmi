@@ -7,6 +7,9 @@ Comando per avviare il gioco con grafica da portatile Ivan:
 /usr/bin/env /usr/lib/jvm/java-17-openjdk-amd64/bin/java -XX:+ShowCodeDetailsInExceptionMessages -cp /home/ivan/.config/Code/User/workspaceStorage/8e146f0cc4710eb650eb9badd0eb4402/redhat.java/jdt_ws/Unibo_c8ba3648/bin connectx.CXGame 6 7 4 connectx.PojamDesi.PojamDesi connectx.L1.L1
 ```
 
+## FONTI PER RELAZIONE
+https://www.scirp.org/journal/paperinformation?paperid=125554
+
 ## APPUNTI
 Intuizione: se alla sua prossima mossa l'avversario ha una mossa vincente, rimuovendo tutte le mosse che mi portano a perdere mi rimane come giocabile la mossa che blocca la sua vittoria.
 
