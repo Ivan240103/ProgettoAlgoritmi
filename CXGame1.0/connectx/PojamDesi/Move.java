@@ -8,17 +8,14 @@ package connectx.PojamDesi;
  */
 public class Move implements Comparable<Move> {
   
-  /**
-   * Colonna in cui giocare la pedina
-   */
+  // colonna in cui giocare la pedina
   private int column;
-  /**
-   * Promettenza della mossa da 0 a 7
-   */
+  // promettenza della mossa da 0 a 7
   private int quality;
 
   /**
    * Costruttore
+   * 
    * @param column colonna in cui giocare
    * @param quality promettenza della mossa
    */
@@ -29,6 +26,7 @@ public class Move implements Comparable<Move> {
 
   /**
    * Getter del campo column
+   * 
    * @return colonna in cui giocare
    */
   public int getColumn() {
@@ -37,6 +35,7 @@ public class Move implements Comparable<Move> {
 
   /**
    * Getter del campo quality
+   * 
    * @return promettenza della mossa
    */
   public int getQuality() {
@@ -45,12 +44,19 @@ public class Move implements Comparable<Move> {
 
   /**
    * Setter per il campo quality
+   * 
    * @param q promettenza della mossa
    */
   public void setQuality(int q) {
     this.quality = q;
   }
 
+  /**
+   * compareTo implementato a specchio (per ordini decrescenti)
+   * 
+   * @param m mossa con cui fare il confronto
+   * @return < 0 if this > m, > 0 if this < m, 0 altrimenti
+   */
   @Override
   public int compareTo(Move m) {
     return -(this.quality - m.getQuality());
