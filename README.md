@@ -14,7 +14,7 @@ Comando per avviare il gioco con repository clonato da github (?):
 
 ## FONTI PER RELAZIONE
 Algoritmo minimax e sue ottimizzazioni:  
-`https://www.scirp.org/journal/paperinformation?paperid=125554`
+`https://www.scirp.org/journal/paperinformation?paperid=125554`  
 Euristiche per i valori di indecisione:  
 `https://www.scirp.org/journal/paperinformation?paperid=90972`
 
