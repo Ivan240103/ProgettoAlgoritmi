@@ -1,5 +1,5 @@
 # ProgettoAlgoritmi
-Progetto di Algoritmi e Strutture Dati 2023-24
+Progetto di Algoritmi e Strutture Dati 2022-23
 
 ## DEBUG
 Comando per avviare il gioco con grafica da portatile Ivan:
@@ -14,9 +14,9 @@ Comando per avviare il gioco con repository clonato da github (?):
 
 ## FONTI PER RELAZIONE
 Algoritmo minimax e sue ottimizzazioni:  
-`https://www.scirp.org/journal/paperinformation?paperid=125554`  
+https://www.scirp.org/journal/paperinformation?paperid=125554  
 Euristiche per i valori di indecisione:  
-`https://www.scirp.org/journal/paperinformation?paperid=90972`
+https://www.scirp.org/journal/paperinformation?paperid=90972
 
 ## APPUNTI
 Intuizione: se alla sua prossima mossa l'avversario ha una mossa vincente, rimuovendo tutte le mosse che mi portano a perdere mi rimane come giocabile la mossa che blocca la sua vittoria.
