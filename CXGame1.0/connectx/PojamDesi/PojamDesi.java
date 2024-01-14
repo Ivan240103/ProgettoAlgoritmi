@@ -9,7 +9,7 @@ import connectx.CXGameState;
 
 /**
  * Progetto di Algoritmi e Strutture Dati 2023-24.
- * <p>Implementazione di un giocatore per connectx
+ * <p>Implementazione di un giocatore automatico per ConnectX
  * 
  * @author Ivan De Simone - ivan.desimone@studio.unibo.it
  * @author Payam Salarieh - payam.salarieh@studio.unibo.it
@@ -26,7 +26,7 @@ public class PojamDesi implements CXPlayer {
   private boolean firstMove;
   // tempo all'inizio del turno in millisecondi
   private long start;
-  // massima profondità dell'albero
+  // massima profondità dell'albero di gioco
   private int maxDepth;
   // massimo e minimo valore che può essere associato ad una mossa
   private float maxEval, minEval;
@@ -152,7 +152,7 @@ public class PojamDesi implements CXPlayer {
     int tmp = sc;
     // valutazione della mossa tmp e della mossa attualmente analizzata 
     float tmpEval, eval;
-    // ordina le mosse per promettenza decrescente
+    // ordina le mosse giocabili per promettenza decrescente
     M.sort(null);
     try {
       for (int d = Integer.max(lastDepth - 2, 3); d <= maxDepth; d++) {
@@ -189,7 +189,7 @@ public class PojamDesi implements CXPlayer {
    * @param beta punteggio massimo ottenibile dall'avversario
    * @param depth profondità di B nell'albero di gioco
    * @param maxDepth massima profondità raggiungibile durante la visita
-   * @return valore assegnato
+   * @return valore assegnato a B
    * @throws TimeoutException il tempo sta per scadere
    */
   private float alphabeta(CXBoard B, boolean myTurn, float alpha, float beta, int depth, int maxDepth) throws TimeoutException {
@@ -241,7 +241,7 @@ public class PojamDesi implements CXPlayer {
    * 
    * @param B configurazione di gioco
    * @param depth profondità di B nell'albero di gioco
-   * @return valore assegnato
+   * @return valore assegnato a B
    */
   private float evaluate(CXBoard B, int depth) {
     if (B.gameState() == WIN) {
